@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static String USER_ID;
     private final String CURRENT = "CURRENT", DONE = "DONE", FUTURE = "FUTURE";
     DatabaseReference databaseReference1, databaseReference2;
+    private Menu menu;
     //firebase auth object
     private FirebaseAuth firebaseAuth;
     private ListView mlistViewCurrent, mlistViewDone, mlistViewFuture;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add_menu, menu);
+        this.menu = menu;
         return true;
     }
 
@@ -102,19 +104,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void shareApp() {
-//        String shareBody = "https://play.google.com/store/apps/details?id=com.prabhav.play";
-//        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-//        sharingIntent.setType("text/plain");
-//        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "APP NAME (Open it in Google Play Store to Download the Application)");
-//        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-//        startActivity(Intent.createChooser(sharingIntent, "Share via"));
+        String shareBody = "https://play.google.com/store/apps/details?id=com.prabhav.boss.future_g";
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "APP NAME (Open it in Google Play Store to Download the Application)");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+        startActivity(Intent.createChooser(sharingIntent, "Share via"));
     }
 
     private void rateOurApp() {
-//        Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-//        Copy App URL from Google Play Store.
-//        intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.prabhav.play"));
-//        startActivity(intent);
+        Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.prabhav.boss.future_g"));
+        startActivity(intent);
     }
 
     private void helpUser() {
@@ -312,13 +313,13 @@ public class MainActivity extends AppCompatActivity {
                     arrayList.add(getSetListView);
                 }
                 //creating adapter
-                if(adapter == currentListViewAdapter) {
+                if (adapter == currentListViewAdapter) {
                     currentListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
                     listview.setAdapter(currentListViewAdapter);
-                }else if(adapter == doneListViewAdapter){
+                } else if (adapter == doneListViewAdapter) {
                     doneListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
                     listview.setAdapter(doneListViewAdapter);
-                }else{
+                } else {
                     futureListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
                     listview.setAdapter(futureListViewAdapter);
                 }
@@ -348,6 +349,13 @@ public class MainActivity extends AppCompatActivity {
         visibleList.setVisibility(View.VISIBLE);
         invisibleList1.setVisibility(View.INVISIBLE);
         invisibleList2.setVisibility(View.INVISIBLE);
+        if (menu != null) {
+            MenuItem menuItem = menu.findItem(R.id.navigation_add);
+            if (visibleList == mlistViewCurrent)
+                menuItem.setVisible(true);
+            else
+                menuItem.setVisible(false);
+        }
     }
 
     public String getDate() {
@@ -359,12 +367,18 @@ public class MainActivity extends AppCompatActivity {
     public void pushingDataToFirebase(String name, String dateString, String statusString, String titleString, String descriptionString, int image, int num) {
         databaseReference2 = FirebaseDatabase.getInstance().getReference();
         String id = databaseReference2.push().getKey();
-        switch (name){
-            case "CURRENT": statusString = "To-Do Now";
+        switch (name) {
+            case "CURRENT":
+                statusString = "To-Do Now";
+                image = R.drawable.ic_info_black_24dp;
                 break;
-            case "DONE":    statusString = "Completed";
+            case "DONE":
+                statusString = "Completed";
+                image = R.drawable.ic_done_black_24dp;
                 break;
-            case "FUTURE":  statusString = "To-Do Later";
+            case "FUTURE":
+                statusString = "To-Do Later";
+                image = R.drawable.ic_next_week_black_24dp;
                 break;
         }
         GetSetListView getSetListView = new GetSetListView(titleString, dateString, descriptionString, statusString, id, image);
