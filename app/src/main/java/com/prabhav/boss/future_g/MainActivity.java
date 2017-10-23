@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     ProgressDialog progressDialog;
     private static String USER_ID;
-    private final String CURRENT = "Current", DONE = "Done", FUTURE = "Future";
+    private final String CURRENT = "CURRENT", DONE = "DONE", FUTURE = "FUTURE";
     DatabaseReference databaseReference1, databaseReference2;
     //firebase auth object
     private FirebaseAuth firebaseAuth;
@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
     private void usersProfile() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        String email="";
+        String email = "";
         if (user != null) {
             // User is signed in
             email = user.getEmail();
@@ -157,18 +157,18 @@ public class MainActivity extends AppCompatActivity {
         //initializing firebase authentication object
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser user = firebaseAuth.getCurrentUser();
-        String email="";
+        String email = "";
         if (user != null) {
             // User is signed in
             email = user.getEmail();
         }
         if (email != null) {
-            email = email.replace(".","_");
-            email = email.replace("@","__");
+            email = email.replace(".", "_");
+            email = email.replace("@", "__");
         }
         USER_ID = email;
 
-        if(firebaseAuth.getCurrentUser() == null){
+        if (firebaseAuth.getCurrentUser() == null) {
             finish();
             startActivity(new Intent(this, LoginActivity.class));
         }
@@ -195,31 +195,39 @@ public class MainActivity extends AppCompatActivity {
         futureListViewAdapter = new ListViewAdapter(this, futureArrayList);
     }
 
-    private void longPressOfItems(final int position) {
+    private void longPressOfItems(final int position, final String name, final ArrayList<GetSetListView> arrayList, String first, final String second, final String third) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle("Take Action...");
         alertDialog.setMessage("Select your action...??");
         alertDialog.setIcon(R.drawable.ic_next_week_black_24dp);
 
-        alertDialog.setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
+        alertDialog.setPositiveButton(first, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 // mlistViewCurrent.
-                databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(CURRENT);
-                databaseReference1.child(currentArrayList.get(position).getId()).removeValue();
-                currentArrayList.remove(position);
+                databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(name);
+                databaseReference1.child(arrayList.get(position).getId()).removeValue();
+                arrayList.remove(position);
                 Toast.makeText(getApplication(), "Successfully Deleted!!", Toast.LENGTH_SHORT).show();
             }
         });
 
-        alertDialog.setNegativeButton("DONE", new DialogInterface.OnClickListener() {
+        alertDialog.setNegativeButton(second, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(getApplication(), "DONE", Toast.LENGTH_SHORT).show();
+                databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(name);
+                pushingDataToFirebase(second, arrayList.get(position).getDate(), arrayList.get(position).getStatus(), arrayList.get(position).getTitle(), arrayList.get(position).getDescription(), arrayList.get(position).getImage(), 2);
+                databaseReference1.child(arrayList.get(position).getId()).removeValue();
+                arrayList.remove(position);
+                Toast.makeText(getApplication(), "Shifted to " + second, Toast.LENGTH_SHORT).show();
             }
         });
 
-        alertDialog.setNeutralButton("FUTURE", new DialogInterface.OnClickListener() {
+        alertDialog.setNeutralButton(third, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(getApplication(), "FUTURE", Toast.LENGTH_SHORT).show();
+                databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(name);
+                pushingDataToFirebase(third, arrayList.get(position).getDate(), arrayList.get(position).getStatus(), arrayList.get(position).getTitle(), arrayList.get(position).getDescription(), arrayList.get(position).getImage(), 2);
+                databaseReference1.child(arrayList.get(position).getId()).removeValue();
+                arrayList.remove(position);
+                Toast.makeText(getApplication(), "Shifted to " + third, Toast.LENGTH_SHORT).show();
             }
         });
         alertDialog.show();
@@ -237,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         // set dialog message
         alertDialogBuilder.setCancelable(false).setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                pushingDataToFirebase(getDate(), "Pending", dialogueTitle.getText().toString().trim(), dialogueDescription.getText().toString().trim(),R.drawable.ic_info_black_24dp);
+                pushingDataToFirebase(CURRENT, getDate(), "To-Do Now", dialogueTitle.getText().toString().trim(), dialogueDescription.getText().toString().trim(), R.drawable.ic_info_black_24dp, 1);
             }
         }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -251,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
         return dialogueTitle.getText().toString().trim();
     }
 
-    private void showDetails(int position) {
+    private void showDetails(int position, ArrayList<GetSetListView> arrayList) {
         LayoutInflater li = LayoutInflater.from(this);
         View promptsView = li.inflate(R.layout.show_details, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -260,15 +268,16 @@ public class MainActivity extends AppCompatActivity {
         final TextView dateDetails = (TextView) promptsView.findViewById(R.id.date_details);
         final TextView statusDetails = (TextView) promptsView.findViewById(R.id.status_details);
         final TextView detailDescriptions = (TextView) promptsView.findViewById(R.id.dialogue_description_details);
-        if(currentArrayList.get(position).getTitle().trim().equals("")){titleHeading.setText("Title");}
-        else titleHeading.setText(currentArrayList.get(position).getTitle());
-        dateDetails.setText(currentArrayList.get(position).getDate());
-        if(currentArrayList.get(position).getStatus().trim().equals("")){
+        if (arrayList.get(position).getTitle().trim().equals("")) {
+            titleHeading.setText("Title");
+        } else titleHeading.setText(arrayList.get(position).getTitle());
+        dateDetails.setText(arrayList.get(position).getDate());
+        if (arrayList.get(position).getStatus().trim().equals("")) {
             statusDetails.setText("Pending");
-        }else statusDetails.setText(currentArrayList.get(position).getStatus());
-        if(currentArrayList.get(position).getDescription().trim().equals("")){
-            detailDescriptions.setText("Work is pending...");}
-        else detailDescriptions.setText(currentArrayList.get(position).getDescription());
+        } else statusDetails.setText(arrayList.get(position).getStatus());
+        if (arrayList.get(position).getDescription().trim().equals("")) {
+            detailDescriptions.setText("Work is pending...");
+        } else detailDescriptions.setText(arrayList.get(position).getDescription());
         // set dialog message
         alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -283,33 +292,46 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(CURRENT);
+        retrievalOfData(CURRENT, mlistViewCurrent, currentArrayList, currentListViewAdapter, "DELETE", DONE, FUTURE);
+        retrievalOfData(DONE, mlistViewDone, doneArrayList, doneListViewAdapter, "DELETE", CURRENT, FUTURE);
+        retrievalOfData(FUTURE, mlistViewFuture, futureArrayList, futureListViewAdapter, "DELETE", DONE, CURRENT);
+    }
+
+    private void retrievalOfData(final String name, final ListView listview, final ArrayList<GetSetListView> arrayList, final ListViewAdapter adapter, final String first, final String second, final String third) {
+        databaseReference1 = FirebaseDatabase.getInstance().getReference(MainActivity.USER_ID).child(name);
         databaseReference1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                currentArrayList.clear();
+                arrayList.clear();
                 progressDialog.cancel();
                 //iterating through all the nodes
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     //getting artist
                     GetSetListView getSetListView = postSnapshot.getValue(GetSetListView.class);
                     //adding artist to the list
-                    currentArrayList.add(getSetListView);
+                    arrayList.add(getSetListView);
                 }
                 //creating adapter
-                currentListViewAdapter = new ListViewAdapter(MainActivity.this, currentArrayList);
-                //attaching adapter to the listview
-                mlistViewCurrent.setAdapter(currentListViewAdapter);
-                mlistViewCurrent.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                if(adapter == currentListViewAdapter) {
+                    currentListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
+                    listview.setAdapter(currentListViewAdapter);
+                }else if(adapter == doneListViewAdapter){
+                    doneListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
+                    listview.setAdapter(doneListViewAdapter);
+                }else{
+                    futureListViewAdapter = new ListViewAdapter(MainActivity.this, arrayList);
+                    listview.setAdapter(futureListViewAdapter);
+                }
+                listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        showDetails(position);
+                        showDetails(position, arrayList);
                     }
                 });
-                mlistViewCurrent.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                     @Override
                     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                        longPressOfItems(position);
+                        longPressOfItems(position, name, arrayList, first, second, third);
                         return true;
                     }
                 });
@@ -334,11 +356,19 @@ public class MainActivity extends AppCompatActivity {
         return dateFormat.format(date);
     }
 
-    public void pushingDataToFirebase(String dateString, String statusString, String titleString, String descriptionString, int image) {
+    public void pushingDataToFirebase(String name, String dateString, String statusString, String titleString, String descriptionString, int image, int num) {
         databaseReference2 = FirebaseDatabase.getInstance().getReference();
         String id = databaseReference2.push().getKey();
+        switch (name){
+            case "CURRENT": statusString = "To-Do Now";
+                break;
+            case "DONE":    statusString = "Completed";
+                break;
+            case "FUTURE":  statusString = "To-Do Later";
+                break;
+        }
         GetSetListView getSetListView = new GetSetListView(titleString, dateString, descriptionString, statusString, id, image);
-        databaseReference2.child(MainActivity.USER_ID).child(CURRENT).child(id).setValue(getSetListView);
-        Toast.makeText(this, "Event Saved Successfully", Toast.LENGTH_LONG).show();
+        databaseReference2.child(MainActivity.USER_ID).child(name).child(id).setValue(getSetListView);
+        if (num == 1) Toast.makeText(this, "Event Saved Successfully", Toast.LENGTH_LONG).show();
     }
 }
